@@ -14,7 +14,7 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./backend",
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["shared/*"],
