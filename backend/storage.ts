@@ -1,3 +1,4 @@
+// File: storage.ts
 import { createHash } from 'crypto';
 import type {
   InsertUser,
@@ -11,7 +12,7 @@ import type {
   Chat,
   Notification,
   Rating,
-  Dispute
+  Dispute,
 } from '@shared/schema';
 import { users, jobs, chats, notifications, ratings, disputes } from '@shared/schema';
 import bcrypt from 'bcryptjs';
@@ -30,7 +31,7 @@ interface IStorage {
     subscriptionStatus: 'active' | 'inactive' | 'trial';
     subscriptionExpiresAt?: Date;
   }): Promise<void>;
-  
+
   // Jobs
   createJob(data: Omit<InsertJob, 'createdAt' | 'updatedAt'>): Promise<Job>;
   getJobById(id: number): Promise<Job | null>;
@@ -49,7 +50,7 @@ interface IStorage {
   updateJob(id: number, data: Partial<Omit<Job, 'id' | 'createdAt'>>): Promise<void>;
   takeJob(jobId: number, carrierId: number): Promise<Job | null>;
   completeJob(jobId: number): Promise<Job | null>;
-  
+
   // Chats
   createChat(data: Omit<InsertChat, 'createdAt' | 'updatedAt'>): Promise<Chat>;
   getChatById(id: number): Promise<Chat | null>;
@@ -58,103 +59,44 @@ interface IStorage {
   getChatsByUser(userId: number): Promise<Chat[]>;
   addMessage(chatId: number, senderId: number, content: string): Promise<Chat | null>;
   markMessagesAsRead(chatId: number, userId: number): Promise<boolean>;
-  
+
   // Notifications
   createNotification(data: Omit<InsertNotification, 'createdAt'>): Promise<Notification>;
   getUserNotifications(userId: number, limit?: number): Promise<Notification[]>;
   getNotificationsByUser(userId: number, limit?: number): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<boolean>;
   markAllNotificationsAsRead(userId: number): Promise<void>;
-  
+
   // Ratings
   createRating(data: Omit<InsertRating, 'createdAt'>): Promise<Rating>;
   getUserRatings(userId: number): Promise<Rating[]>;
   getJobRatings(jobId: number): Promise<Rating[]>;
   getUserAverageRating(userId: number): Promise<number>;
-  
+
   // Analytics operations
   getUserCount(role?: string): Promise<number>;
   getJobCount(status?: string): Promise<number>;
   getMonthlyRevenue(): Promise<number>;
-  
+
   // Admin operations
- async getAllUsers(filters: {
-  role?: string;
-  verified?: boolean;
-  hasDocuments?: boolean;
-  limit?: number;
-  offset?: number;
-}): Promise<User[]> {
-  try {
-    let baseQuery = db.select().from(users);
-    
-    // Apply filters individually to avoid complex query builder issues
-    if (filters.role) {
-      baseQuery = baseQuery.where(eq(users.role, filters.role as any));
-    }
-    
-    // For now, simplify the verified filter to use emailVerified
-    if (filters.verified !== undefined) {
-      baseQuery = baseQuery.where(eq(users.emailVerified, filters.verified));
-    }
-    
-    // Execute the query
-    let results = await baseQuery.orderBy(desc(users.createdAt));
-    
-    // Apply limit and offset in memory for now (can be optimized later)
-    if (filters.offset) {
-      results = results.slice(filters.offset);
-    }
-    if (filters.limit) {
-      results = results.slice(0, filters.limit);
-    }
-    
-    return results;
-  } catch (error) {
-    console.error('Error in getAllUsers:', error);
-    return [];
-  }
-}
-  
+  getAllUsers(filters: {
+    role?: string;
+    verified?: boolean;
+    hasDocuments?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<User[]>;
   getUsersWithPendingDocuments(): Promise<User[]>;
   verifyUserDocuments(userId: number, adminId: number, approved: boolean, notes?: string): Promise<void>;
-  
+
   // Dispute operations
   createDispute(data: Omit<InsertDispute, 'createdAt' | 'updatedAt'>): Promise<Dispute>;
-  
-async getDisputes(filters: {
-  status?: string;
-  adminId?: number;
-  limit?: number;
-  offset?: number;
-}): Promise<Dispute[]> {
-  try {
-    let baseQuery = db.select().from(disputes);
-    
-    if (filters.status) {
-      baseQuery = baseQuery.where(eq(disputes.status, filters.status as any));
-    }
-    
-    if (filters.adminId) {
-      baseQuery = baseQuery.where(eq(disputes.adminId, filters.adminId));
-    }
-    
-    let results = await baseQuery.orderBy(desc(disputes.createdAt));
-    
-    if (filters.offset) {
-      results = results.slice(filters.offset);
-    }
-    if (filters.limit) {
-      results = results.slice(0, filters.limit);
-    }
-    
-    return results;
-  } catch (error) {
-    console.error('Error in getDisputes:', error);
-    return [];
-  }
-}
-
+  getDisputes(filters: {
+    status?: string;
+    adminId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<Dispute[]>;
   getDisputeById(id: number): Promise<Dispute | null>;
   updateDispute(id: number, data: Partial<Omit<Dispute, 'id' | 'createdAt'>>): Promise<void>;
   assignDisputeToAdmin(disputeId: number, adminId: number): Promise<void>;
@@ -165,7 +107,7 @@ class PostgreSQLStorage implements IStorage {
   // Users
   async createUser(data: Omit<InsertUser, 'createdAt' | 'updatedAt'>): Promise<User> {
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    
+
     const [user] = await db
       .insert(users)
       .values({
@@ -173,7 +115,7 @@ class PostgreSQLStorage implements IStorage {
         password: hashedPassword,
       })
       .returning();
-    
+
     return user;
   }
 
@@ -182,7 +124,7 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(users)
       .where(eq(users.id, id));
-    
+
     return user || null;
   }
 
@@ -191,7 +133,7 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(users)
       .where(eq(users.email, email));
-    
+
     return user || null;
   }
 
@@ -229,7 +171,7 @@ class PostgreSQLStorage implements IStorage {
       .insert(jobs)
       .values(data)
       .returning();
-    
+
     return job;
   }
 
@@ -238,7 +180,7 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(jobs)
       .where(eq(jobs.id, id));
-    
+
     return job || null;
   }
 
@@ -252,36 +194,36 @@ class PostgreSQLStorage implements IStorage {
     offset?: number;
   }): Promise<Job[]> {
     let query = db.select().from(jobs);
-    
+
     const conditions = [];
     if (filters.status) conditions.push(eq(jobs.status, filters.status as any));
     if (filters.cargoType) conditions.push(eq(jobs.cargoType, filters.cargoType as any));
     if (filters.industry) conditions.push(eq(jobs.industry, filters.industry as any));
     if (filters.pickupCountry) conditions.push(eq(jobs.pickupCountry, filters.pickupCountry as any));
     if (filters.deliveryCountry) conditions.push(eq(jobs.deliveryCountry, filters.deliveryCountry as any));
-    
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
-    
+
     query = query.orderBy(desc(jobs.createdAt)) as any;
-    
+
     if (filters.limit) {
       query = query.limit(filters.limit) as any;
     }
-    
+
     if (filters.offset) {
       query = query.offset(filters.offset) as any;
     }
-    
+
     return query;
   }
 
   async getUserJobs(userId: number, role: 'shipper' | 'carrier'): Promise<Job[]> {
-    const condition = role === 'shipper' 
+    const condition = role === 'shipper'
       ? eq(jobs.shipperId, userId)
       : eq(jobs.carrierId, userId);
-    
+
     return db
       .select()
       .from(jobs)
@@ -310,7 +252,7 @@ class PostgreSQLStorage implements IStorage {
       })
       .where(eq(jobs.id, jobId))
       .returning();
-    
+
     return updatedJob || null;
   }
 
@@ -324,7 +266,7 @@ class PostgreSQLStorage implements IStorage {
       })
       .where(eq(jobs.id, jobId))
       .returning();
-    
+
     return updatedJob || null;
   }
 
@@ -334,7 +276,7 @@ class PostgreSQLStorage implements IStorage {
       .insert(chats)
       .values(data)
       .returning();
-    
+
     return chat;
   }
 
@@ -343,7 +285,7 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(chats)
       .where(eq(chats.id, id));
-    
+
     return chat || null;
   }
 
@@ -352,7 +294,7 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(chats)
       .where(eq(chats.jobId, jobId));
-    
+
     return chat || null;
   }
 
@@ -369,18 +311,18 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(chats)
       .where(eq(chats.id, chatId));
-    
+
     if (!chat) return null;
-    
+
     const newMessage = {
       senderId,
       content,
       timestamp: new Date(),
       read: false,
     };
-    
+
     const updatedMessages = [...(chat.messages || []), newMessage];
-    
+
     const [updatedChat] = await db
       .update(chats)
       .set({
@@ -389,45 +331,45 @@ class PostgreSQLStorage implements IStorage {
       })
       .where(eq(chats.id, chatId))
       .returning();
-    
+
     return updatedChat || null;
   }
 
-async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
-  try {
-    const [chat] = await db
-      .select()
-      .from(chats)
-      .where(eq(chats.id, chatId));
-    
-    if (!chat) return false;
-    
-    const updatedMessages = (chat.messages || []).map(message => ({
-      ...message,
-      read: message.senderId === userId ? message.read : true,
-    }));
-    
-    await db
-      .update(chats)
-      .set({
-        messages: updatedMessages,
-        updatedAt: new Date(),
-      })
-      .where(eq(chats.id, chatId));
-    
-    return true;
-  } catch (error) {
-    return false;
+  async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
+    try {
+      const [chat] = await db
+        .select()
+        .from(chats)
+        .where(eq(chats.id, chatId));
+
+      if (!chat) return false;
+
+      const updatedMessages = (chat.messages || []).map(message => ({
+        ...message,
+        read: message.senderId === userId ? message.read : true,
+      }));
+
+      await db
+        .update(chats)
+        .set({
+          messages: updatedMessages,
+          updatedAt: new Date(),
+        })
+        .where(eq(chats.id, chatId));
+
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
-}
-  
+
   // Notifications
   async createNotification(data: Omit<InsertNotification, 'createdAt'>): Promise<Notification> {
     const [notification] = await db
       .insert(notifications)
       .values(data)
       .returning();
-    
+
     return notification;
   }
 
@@ -441,16 +383,16 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
   }
 
   async markNotificationAsRead(id: number): Promise<boolean> {
-  try {
-    await db
-      .update(notifications)
-      .set({ read: true })
-      .where(eq(notifications.id, id));
-    return true;
-  } catch (error) {
-    return false;
+    try {
+      await db
+        .update(notifications)
+        .set({ read: true })
+        .where(eq(notifications.id, id));
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
-}
 
   async markAllNotificationsAsRead(userId: number): Promise<void> {
     await db
@@ -465,7 +407,7 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
       .insert(ratings)
       .values(data)
       .returning();
-    
+
     return rating;
   }
 
@@ -491,38 +433,38 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
       })
       .from(ratings)
       .where(eq(ratings.ratedUserId, userId));
-    
+
     return result?.avgRating || 0;
   }
-  
+
   // Analytics operations
   async getUserCount(role?: string): Promise<number> {
     let query = db.select({ count: sql<number>`count(*)` }).from(users);
-    
+
     if (role) {
       query = query.where(eq(users.role, role as any)) as any;
     }
-    
+
     const [result] = await query;
     return result?.count || 0;
   }
-  
+
   async getJobCount(status?: string): Promise<number> {
     let query = db.select({ count: sql<number>`count(*)` }).from(jobs);
-    
+
     if (status) {
       query = query.where(eq(jobs.status, status as any)) as any;
     }
-    
+
     const [result] = await query;
     return result?.count || 0;
   }
-  
+
   async getMonthlyRevenue(): Promise<number> {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    
+
     const [result] = await db
       .select({
         totalRevenue: sql<number>`SUM(${jobs.paymentAmount})::float`,
@@ -534,27 +476,27 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
           sql`${jobs.completedAt} >= ${startOfMonth}`
         )
       );
-    
+
     return result?.totalRevenue || 0;
   }
-  
+
   // Additional methods needed by routes
   async getJobsByShipper(shipperId: number): Promise<Job[]> {
     return this.getUserJobs(shipperId, 'shipper');
   }
-  
+
   async getJobsByCarrier(carrierId: number): Promise<Job[]> {
     return this.getUserJobs(carrierId, 'carrier');
   }
-  
+
   async getChatsByUser(userId: number): Promise<Chat[]> {
     return this.getUserChats(userId);
   }
-  
+
   async getNotificationsByUser(userId: number, limit: number = 50): Promise<Notification[]> {
     return this.getUserNotifications(userId, limit);
   }
-  
+
   // Admin operations
   async getAllUsers(filters: {
     role?: string;
@@ -564,7 +506,7 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
     offset?: number;
   }): Promise<User[]> {
     let query = db.select().from(users);
-    
+
     const conditions = [];
     if (filters.role) conditions.push(eq(users.role, filters.role as any));
     if (filters.verified !== undefined) conditions.push(eq(users.verified, filters.verified));
@@ -575,19 +517,19 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
         conditions.push(or(sql`${users.documents} IS NULL`, sql`${users.documents} = '[]'`));
       }
     }
-    
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
-    
+
     query = query.orderBy(desc(users.createdAt));
-    
+
     if (filters.limit) query = query.limit(filters.limit);
     if (filters.offset) query = query.offset(filters.offset);
-    
+
     return await query;
   }
-  
+
   async getUsersWithPendingDocuments(): Promise<User[]> {
     return db.select()
       .from(users)
@@ -600,7 +542,7 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
       )
       .orderBy(desc(users.createdAt));
   }
-  
+
   async verifyUserDocuments(userId: number, adminId: number, approved: boolean, notes?: string): Promise<void> {
     await db
       .update(users)
@@ -609,29 +551,29 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
-    
+
     // Create notification for user
     await this.createNotification({
       userId: userId,
       type: approved ? 'job_match' : 'subscription_expiring',
       title: approved ? 'Documents Verified' : 'Documents Rejected',
-      message: approved 
+      message: approved
         ? 'Your business documents have been verified and your account is now active.'
         : `Your documents were rejected: ${notes || 'Please upload valid business documents.'}`,
       data: { adminId, notes }
     });
   }
-  
+
   // Dispute operations
   async createDispute(data: Omit<InsertDispute, 'createdAt' | 'updatedAt'>): Promise<Dispute> {
     const [dispute] = await db
       .insert(disputes)
       .values(data)
       .returning();
-    
+
     return dispute;
   }
-  
+
   async getDisputes(filters: {
     status?: string;
     adminId?: number;
@@ -639,32 +581,32 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
     offset?: number;
   }): Promise<Dispute[]> {
     let query = db.select().from(disputes);
-    
+
     const conditions = [];
     if (filters.status) conditions.push(eq(disputes.status, filters.status as any));
     if (filters.adminId) conditions.push(eq(disputes.adminId, filters.adminId));
-    
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
-    
+
     query = query.orderBy(desc(disputes.createdAt));
-    
+
     if (filters.limit) query = query.limit(filters.limit);
     if (filters.offset) query = query.offset(filters.offset);
-    
+
     return await query;
   }
-  
+
   async getDisputeById(id: number): Promise<Dispute | null> {
     const [dispute] = await db
       .select()
       .from(disputes)
       .where(eq(disputes.id, id));
-    
+
     return dispute || null;
   }
-  
+
   async updateDispute(id: number, data: Partial<Omit<Dispute, 'id' | 'createdAt'>>): Promise<void> {
     await db
       .update(disputes)
@@ -674,7 +616,7 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
       })
       .where(eq(disputes.id, id));
   }
-  
+
   async assignDisputeToAdmin(disputeId: number, adminId: number): Promise<void> {
     await db
       .update(disputes)
@@ -685,7 +627,7 @@ async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
       })
       .where(eq(disputes.id, disputeId));
   }
-  
+
   async resolveDispute(disputeId: number, resolution: string, adminId: number): Promise<void> {
     await db
       .update(disputes)
