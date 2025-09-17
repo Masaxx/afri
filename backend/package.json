@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "description": "LoadLink Africa Backend API",
-  "main": "dist/index.js",
+  "main": "dist/backend/index.js",
   "scripts": {
-    "dev": "NODE_ENV=development tsx index.ts",
+    "dev": "NODE_ENV=development tsx backend/index.ts",
     "build": "tsc && tsc-alias",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production node dist/backend/index.js",
     "check": "tsc --noEmit",
     "db:push": "drizzle-kit push"
   },
