@@ -14,15 +14,15 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "outDir": "./dist",
-    "rootDir": "./backend",
+    "rootDir": "./",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["shared/*"],
+      "@shared/*": ["backend/shared/*"],
       "@backend/*": ["backend/*"]
     },
     "sourceMap": true,
     "declaration": false
   },
-  "include": ["backend/**/*.ts", "shared/**/*.ts"],
+  "include": ["backend/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
