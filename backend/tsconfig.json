@@ -20,7 +20,7 @@
   },
   "include": [
     "**/*.ts",
-    "shared/**/*.ts"
+    "backend/shared/**/*.ts"
   ],
   "exclude": [
     "node_modules",
