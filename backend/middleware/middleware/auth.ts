@@ -50,3 +50,17 @@ export function requireRole(roles: string[]) {
     next();
   };
 }
+
+export function requireSubscription(req: AuthRequest, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  if (req.user.role === UserRole.TRUCKING_COMPANY) {
+    if (req.user.subscriptionStatus !== 'active' && req.user.subscriptionStatus !== 'trial') {
+      return res.status(403).json({ message: 'Active subscription required' });
+    }
+  }
+
+  next();
+}
