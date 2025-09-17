@@ -334,13 +334,14 @@ class PostgreSQLStorage implements IStorage {
     return updatedChat || null;
   }
 
-  async markMessagesAsRead(chatId: number, userId: number): Promise<void> {
+async markMessagesAsRead(chatId: number, userId: number): Promise<boolean> {
+  try {
     const [chat] = await db
       .select()
       .from(chats)
       .where(eq(chats.id, chatId));
     
-    if (!chat) return;
+    if (!chat) return false;
     
     const updatedMessages = (chat.messages || []).map(message => ({
       ...message,
@@ -354,8 +355,13 @@ class PostgreSQLStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(chats.id, chatId));
+    
+    return true;
+  } catch (error) {
+    return false;
   }
-
+}
+  
   // Notifications
   async createNotification(data: Omit<InsertNotification, 'createdAt'>): Promise<Notification> {
     const [notification] = await db
@@ -375,12 +381,17 @@ class PostgreSQLStorage implements IStorage {
       .limit(limit);
   }
 
-  async markNotificationAsRead(id: number): Promise<void> {
+  async markNotificationAsRead(id: number): Promise<boolean> {
+  try {
     await db
       .update(notifications)
       .set({ read: true })
       .where(eq(notifications.id, id));
+    return true;
+  } catch (error) {
+    return false;
   }
+}
 
   async markAllNotificationsAsRead(userId: number): Promise<void> {
     await db
