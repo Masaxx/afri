@@ -1,7 +1,7 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
-import { storage } from '../storage';
+import { storage } from '../../storage';
 import { User } from '@shared/schema';
 
 export class WebSocketService {
