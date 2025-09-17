@@ -72,6 +72,7 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(),
+  verified: boolean('verified').notNull().default(false),
   
   // Common fields
   companyName: varchar('company_name', { length: 255 }),
