@@ -12,8 +12,8 @@ import type {
   Notification,
   Rating,
   Dispute
-} from './shared/schema';
-import { users, jobs, chats, notifications, ratings, disputes } from './shared/schema';
+} from '@shared/schema';
+import { users, jobs, chats, notifications, ratings, disputes } from '@shared/schema';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
 import { eq, and, or, desc, asc, count, sql } from 'drizzle-orm';
