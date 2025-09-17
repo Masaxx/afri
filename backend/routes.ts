@@ -88,8 +88,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
-  app.post('/api/auth/register/trucking', async (req, res) => {
-    try {
+app.post('/api/auth/register/trucking', async (req: Request, res: Response) => {
+  try {
       const validatedData = registerTruckingSchema.parse(req.body);
       
       // Check if user already exists
@@ -125,11 +125,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subscriptionStatus: user.subscriptionStatus
         }
       });
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      res.status(400).json({ message: error.message || 'Registration failed' });
-    }
-  });
+
+} catch (error: any) {
+    console.error('Registration error:', error);
+    res.status(400).json({ message: error.message || 'Registration failed' });
+  }
+});
+
+
 
   app.post('/api/auth/register/shipping', async (req, res) => {
     try {
@@ -211,19 +214,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res) => {
-    res.json({
-      user: {
-        id: req.user!.id,
-        email: req.user!.email,
-        role: req.user!.role,
-        companyName: req.user!.companyName,
-        contactPersonName: req.user!.contactPersonName,
-        subscriptionStatus: req.user!.subscriptionStatus,
-        emailVerified: req.user!.emailVerified
-      }
-    });
+ app.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Response) => {
+  res.json({
+    user: {
+      id: req.user!.id,
+      email: req.user!.email,
+      role: req.user!.role,
+      companyName: req.user!.companyName,
+      contactPersonName: req.user!.contactPersonName,
+      subscriptionStatus: req.user!.subscriptionStatus,
+      emailVerified: req.user!.emailVerified
+    }
   });
+});
 
   // Document upload route
   app.post('/api/auth/upload-documents', authenticateToken, upload.array('documents', 5), async (req: AuthRequest, res) => {
@@ -562,34 +565,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    app.post('/api/payments/webhook', async (req, res) => {
-      const sig = req.headers['stripe-signature'] as string;
-      let event;
+  app.post('/api/payments/webhook', async (req: Request, res: Response) => {
+  const sig = req.headers['stripe-signature'] as string;
+  let event;
 
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-      } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-      }
-
+  try {
+    event = stripe!.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
       // Handle the event
       switch (event.type) {
-        case 'invoice.payment_succeeded':
-          const invoice = event.data.object;
-          if (invoice.subscription) {
-            const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-            const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
-            
-            if (customer.metadata?.userId) {
-              await storage.updateUserSubscription(parseInt(customer.metadata.userId), {
-                subscriptionStatus: 'active',
-                subscriptionExpiresAt: new Date(subscription.current_period_end * 1000)
-              });
-            }
-          }
-          break;
-
+    case 'invoice.payment_succeeded':
+      const invoice = event.data.object as any;
+      if (invoice.subscription) {
+        const subscription = await stripe!.subscriptions.retrieve(invoice.subscription as string);
+        const customer = await stripe!.customers.retrieve(subscription.customer as string) as Stripe.Customer;
+        
+        if (customer.metadata?.userId) {
+          await storage.updateUserSubscription(parseInt(customer.metadata.userId), {
+            subscriptionStatus: 'active',
+            subscriptionExpiresAt: new Date(subscription.current_period_end * 1000)
+          });
+        }
+      }
+      break;
+          
         case 'invoice.payment_failed':
           // Handle failed payment
           break;
