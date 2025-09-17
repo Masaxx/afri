@@ -23,6 +23,6 @@
     "sourceMap": true,
     "declaration": false
   },
-  "include": ["backend/**/*.ts", "backend/shared/**/*.ts"],
+  "include": ["*.ts", "shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
