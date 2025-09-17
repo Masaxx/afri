@@ -17,8 +17,8 @@
     "baseUrl": "./",
     "paths": {
       "@shared/*": ["shared/*"],
-      "@services/*": ["services/*"],
-      "@middleware/*": ["middleware/*"]
+      "@services/*": ["services/services/*"],
+      "@middleware/*": ["middleware/middleware/*"]
     },
     "sourceMap": true,
     "declaration": false
