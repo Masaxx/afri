@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "type": "module",
   "description": "LoadLink Africa Backend API",
-  "main": "dist/backend/index.js",
-  "scripts": {
-    "dev": "NODE_ENV=development tsx backend/index.ts",
-    "build": "tsc && tsc-alias",
-    "start": "NODE_ENV=production node dist/backend/index.js",
-    "check": "tsc --noEmit",
-    "db:push": "drizzle-kit push"
-  },
+  "main": "dist/index.js",
+"scripts": {
+  "dev": "NODE_ENV=development tsx backend/index.ts",
+  "build": "tsc && tsc-alias",
+  "start": "NODE_ENV=production node dist/index.js",
+  "check": "tsc --noEmit",
+  "db:push": "drizzle-kit push"
+},
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
     "bcryptjs": "^3.0.2",
