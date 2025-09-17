@@ -7,9 +7,9 @@ import path from 'path';
 import fs from 'fs';
 import Stripe from 'stripe';
 import { storage } from "./storage";
-import { WebSocketService } from "./services/websocket";
-import { emailService } from "./services/email";
-import { authenticateToken, requireRole, requireSubscription, AuthRequest } from "./middleware/auth";
+import { WebSocketService } from "@services/websocket";
+import { emailService } from "@services/email";
+import { authenticateToken, requireRole, requireSubscription, AuthRequest } from "@middleware/auth";
 import { 
   loginSchema, 
   registerTruckingSchema, 
@@ -17,7 +17,7 @@ import {
   insertJobSchema,
   UserRole,
   JobStatus 
-} from "./shared/schema";
+} from "@shared/schema";
 import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
