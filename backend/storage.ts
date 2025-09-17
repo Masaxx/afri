@@ -78,24 +78,83 @@ interface IStorage {
   getMonthlyRevenue(): Promise<number>;
   
   // Admin operations
-  getAllUsers(filters: {
-    role?: string;
-    verified?: boolean;
-    hasDocuments?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<User[]>;
+ async getAllUsers(filters: {
+  role?: string;
+  verified?: boolean;
+  hasDocuments?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<User[]> {
+  try {
+    let baseQuery = db.select().from(users);
+    
+    // Apply filters individually to avoid complex query builder issues
+    if (filters.role) {
+      baseQuery = baseQuery.where(eq(users.role, filters.role as any));
+    }
+    
+    // For now, simplify the verified filter to use emailVerified
+    if (filters.verified !== undefined) {
+      baseQuery = baseQuery.where(eq(users.emailVerified, filters.verified));
+    }
+    
+    // Execute the query
+    let results = await baseQuery.orderBy(desc(users.createdAt));
+    
+    // Apply limit and offset in memory for now (can be optimized later)
+    if (filters.offset) {
+      results = results.slice(filters.offset);
+    }
+    if (filters.limit) {
+      results = results.slice(0, filters.limit);
+    }
+    
+    return results;
+  } catch (error) {
+    console.error('Error in getAllUsers:', error);
+    return [];
+  }
+}
+  
   getUsersWithPendingDocuments(): Promise<User[]>;
   verifyUserDocuments(userId: number, adminId: number, approved: boolean, notes?: string): Promise<void>;
   
   // Dispute operations
   createDispute(data: Omit<InsertDispute, 'createdAt' | 'updatedAt'>): Promise<Dispute>;
-  getDisputes(filters: {
-    status?: string;
-    adminId?: number;
-    limit?: number;
-    offset?: number;
-  }): Promise<Dispute[]>;
+  
+async getDisputes(filters: {
+  status?: string;
+  adminId?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<Dispute[]> {
+  try {
+    let baseQuery = db.select().from(disputes);
+    
+    if (filters.status) {
+      baseQuery = baseQuery.where(eq(disputes.status, filters.status as any));
+    }
+    
+    if (filters.adminId) {
+      baseQuery = baseQuery.where(eq(disputes.adminId, filters.adminId));
+    }
+    
+    let results = await baseQuery.orderBy(desc(disputes.createdAt));
+    
+    if (filters.offset) {
+      results = results.slice(filters.offset);
+    }
+    if (filters.limit) {
+      results = results.slice(0, filters.limit);
+    }
+    
+    return results;
+  } catch (error) {
+    console.error('Error in getDisputes:', error);
+    return [];
+  }
+}
+
   getDisputeById(id: number): Promise<Dispute | null>;
   updateDispute(id: number, data: Partial<Omit<Dispute, 'id' | 'createdAt'>>): Promise<void>;
   assignDisputeToAdmin(disputeId: number, adminId: number): Promise<void>;
